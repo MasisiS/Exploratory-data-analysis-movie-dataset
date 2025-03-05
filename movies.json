@@ -1,0 +1,86 @@
+# Import libraries
+
+import numpy as np
+import pandas as pd
+import ast, json
+
+from datetime import datetime
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# Load the movies dataset 
+movies_df = pd.read_csv('movies.csv')
+
+movies_df.head()
+
+# Remove duplicate rows
+movies_df.drop_duplicates(inplace=True)
+movies_df
+
+# Removing rows with missing dataset
+movies_df.dropna()
+
+# Discard rows with zero movie budget
+movies_df.drop(movies_df[(movies_df.budget == 0) | (movies_df.revenue == 0)].index, inplace=True)
+movies_df
+
+# Changing the release_date column to DateTime column
+movies_df['release_date'] = pd.to_datetime(movies_df['release_date'])
+
+# Extracting the release year from every release date
+movies_df['year'] = movies_df['release_date'].dt.year
+movies_df
+
+# Top 5 expensive movied by budgets
+most_expensive = movies_df.sort_values(by='budget', axis=0, ascending=False)
+most_expensive.head()
+
+# Top 5 most profitable movies
+# Which are the top 5 most profitable movies? Compare the min and max profits.
+
+# profit = revenue - budget
+movies_title = movies_df.title
+profit = movies_df.revenue - movies_df.budget
+movies_df['profit'] = profit
+
+most_profitable = movies_df.sort_values(by='profit', axis=0, ascending=False)
+least_profitable = movies_df.sort_values(by='profit', axis=0, ascending=True)
+
+frames = [most_profitable.iloc[0:5,:], least_profitable.iloc[0:5,:]]
+movies_profit= pd.concat(frames)
+movies_profit.sort_values(by='profit', axis=0, ascending=False, inplace=True)
+plt.figure(figsize=(20,5))
+sns.barplot(data=movies_profit, y='title', x='profit')
+# Most profitable is Avator
+
+# Finding the most popular movie
+movies_df.sort_values(by='popularity', axis=0, ascending=False, inplace=True)
+popular_movies = movies_df.head(50)
+plt.figure(figsize=(20,20))
+sns.barplot(data=popular_movies, y='title', x='popularity')
+# Minions is popular
+
+# Movies which are rated above 7
+movies_df.sort_values('vote_average', axis=0, ascending=False, inplace=True)
+top_rating = movies_df.loc[(movies_df.vote_average > 7), ['title', 'vote_average']] 
+top_rating
+
+
+# Most successful genres with a bar plot explaining the frequency of movies in each genre
+genres_list = movies_df['genres'].to_list()
+genres_list_1 = []
+for item in genres_list:
+    i = item.split(',')[0].strip().replace("'","").replace('[','').replace(']','')
+    genres_list_1.append(i)
+genres_list_1.remove('')
+genres_df = pd.DataFrame(genres_list_1)
+#print(genres_df)
+gen_data = genres_df.pivot_table(index = [0], aggfunc ='size')
+gen_dataframe = pd.DataFrame(gen_data)
+#print(gen_dataframe)
+film_genres = gen_dataframe.iloc[:,0]
+frequency = gen_dataframe.index
+plt.figure(figsize=(20,10))
+sns.barplot(data=gen_dataframe, x=film_genres, y=frequency)
+plt.ylabel('Film Genres')
+plt.xlabel('Frequency')
